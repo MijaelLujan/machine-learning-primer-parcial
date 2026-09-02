@@ -1,0 +1,15 @@
+# Entorno virtual
+.venv/
+
+# Notebooks
+notebooks/*.ipynb
+
+# Datasets
+data/
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Checkpoints de Jupyter
+.ipynb_checkpoints/

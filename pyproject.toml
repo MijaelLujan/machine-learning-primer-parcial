@@ -1,0 +1,26 @@
+[project]
+name = "machine-learning-primer-parcial"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mijael Luján", email = "lujanmijael@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.11.1",
+    "polars>=1.44.1",
+    "scikit-learn>=1.9.0",
+]
+
+[project.scripts]
+machine-learning-primer-parcial = "machine_learning_primer_parcial:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+]
