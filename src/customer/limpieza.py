@@ -1,5 +1,14 @@
 """
 Módulo de limpieza y preparación de datos para Customer.
+Resumen de Transformaciones:
+- Volumen: 793 filas y 8 columnas finales (sin pérdida de registros).
+- Nomenclatura: Conversión a snake_case sin espacios (ej. customer_id, postal_code).
+- Limpieza de Texto: Eliminación de espacios residuales (strip_chars) en columnas categóricas.
+- Consistencia de IDs: Conversión a mayúsculas para corregir inconsistencias (ej. 'Co-12640' -> 'CO-12640').
+- Tipos de Datos: 'postal_code' casteado a String (código territorial no numérico).
+- Selección de Features: Descarte de 'country' por varianza cero (100% United States).
+- Duplicados/Nulos: Validación de 0 registros nulos y 0 duplicados en 'customer_id'.
+- Salida: data/Customer_clean.csv
 """
 
 from pathlib import Path
