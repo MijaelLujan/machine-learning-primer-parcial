@@ -1250,6 +1250,7 @@ name = "machine-learning-primer-parcial"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "polars" },
     { name = "scikit-learn" },
@@ -1262,6 +1263,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "matplotlib", specifier = ">=3.11.1" },
     { name = "polars", specifier = ">=1.44.1" },
     { name = "scikit-learn", specifier = ">=1.9.0" },
