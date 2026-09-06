@@ -8,13 +8,11 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "ipykernel>=7.3.0",
     "matplotlib>=3.11.1",
     "polars>=1.44.1",
     "scikit-learn>=1.9.0",
 ]
-
-[project.scripts]
-machine-learning-primer-parcial = "machine_learning_primer_parcial:main"
 
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
