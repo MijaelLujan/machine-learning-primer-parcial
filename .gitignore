@@ -2,7 +2,7 @@
 .venv/
 
 # Notebooks
-notebooks/*.ipynb
+#notebooks/*.ipynb
 
 # Datasets
 data/
