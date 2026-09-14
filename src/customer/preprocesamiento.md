@@ -1,79 +1,101 @@
-# Informe Técnico: Preprocesamiento de Datos para Machine Learning
-**Dataset:** `Customer_clean.csv`  
-**Notebook:** `02_limpieza_customerNicole.ipynb`  
+# Informe Técnico: Preprocesamiento de Datos con Feature Engineering Territorial
+
+**Dataset:** `Customer_clean.csv`
+
+**Notebook:** `02_preprocesamiento_customerNicole.ipynb`
+
 **Fase:** Ingeniería de Características y Preparación de Datos (Feature Engineering & Preprocessing)
 
 ---
 
 ## 1. Resumen Ejecutivo
-Se realizó la etapa de preprocesamiento sobre el conjunto de datos de clientes (`Customer_clean.csv`, 793 registros y 8 columnas), transformando los atributos brutos en una matriz numérica optimizada y estandarizada, apta para ser consumida directamente por algoritmos de Machine Learning (modelos de regresión, clasificación o algoritmos de clustering tipo K-Means).
+
+Se actualizó el flujo de preparación del conjunto de datos de clientes (`Customer_clean.csv`, 793 registros) para incorporar información de localización fina sin incurrir en la maldición de la dimensionalidad. Mediante extracción por prefijo postal, estandarización numérica y vectorización binaria, se generó una matriz estructurada orientada a tareas de segmentación territorial y demográfica (K-Means, DBSCAN) o clasificación supervisada.
 
 ---
 
-## 2. Diagnóstico Inicial del Dataset (`df.info()`)
-El dataset original cuenta con 793 filas sin valores nulos (100% de completitud) distribuidas en las siguientes columnas:
-* `customer_id` (str): Identificador alfanumérico único del cliente.
-* `customer_name` (str): Nombre del cliente.
-* `segment` (str): Segmento de mercado (Consumer, Corporate, Home Office).
-* `age` (int64): Edad del cliente (rango continuo).
-* `city` (str): Ciudad de residencia.
-* `state` (str): Estado geográfico.
-* `postal_code` (int64): Código postal (variable categórica codificada numéricamente).
-* `region` (str): Región geográfica macro (Central, East, South, West).
+## 2. Diagnóstico y Tratamiento del Código Postal
+
+* **Problema previo:** La columna original `postal_code` posee una cardinalidad elevada que, al aplicarse codificación One-Hot directa, generaría cientos de variables dispersas sobreajustando el volumen muestral (793 filas).
+
+
+* **Técnica aplicada (Feature Extraction):** Se extrajo el primer carácter alfanumérico del código postal (`postal_code.astype(str).str[0]`) para definir la nueva característica `postal_zone`.
+* **Beneficio analítico:** Reduce cientos de valores individuales a un rango acotado de zonas macrosectoriales, preservando la proximidad territorial relativa sin saturar el espacio vectorial.
 
 ---
 
 ## 3. Criterios de Selección y Descarte de Variables
 
-1. **Variables Descartadas (`remainder='drop'`):**
-   * `customer_id` y `customer_name`: Identificadores únicos sin capacidad de generalización predictiva (evita sobreajuste y ruido).
-   * `postal_code` y `city`: Variables geográficas de alta cardinalidad que generarían una dispersión dimensional excesiva para el volumen de datos disponible (793 filas).
+* **Variables Descartadas (`remainder='drop'`):**
+* `customer_id` y `customer_name`: Identificadores unívocos no generalizables.
 
-2. **Variable Numérica Seleccionada:**
-   * `age`: Atributo demográfico continuo de relevancia analítica.
 
-3. **Variables Categóricas Seleccionadas:**
-   * `segment` (3 niveles): Atributo conductual/comercial.
-   * `region` (4 niveles): Atributo espacial generalizado.
+* `postal_code` original: Sustituido funcionalmente por `postal_zone`.
+* `city` y `state`: Omitidas para prevenir colinealidad geográfica y sobredispersión.
+
+
+
+
+* **Variable Numérica Continua:**
+* `age`: Variable demográfica central.
+
+
+
+
+* **Variables Categóricas Nominales:**
+* `segment`: Clasificación comercial (Consumer, Corporate, Home Office).
+
+
+* `region`: División geográfica macro (Central, East, South, West).
+
+
+* `postal_zone`: Macrozona postal calculada.
+
+
 
 ---
 
 ## 4. Transformaciones Aplicadas (`ColumnTransformer`)
 
-Para garantizar reproducibilidad y evitar fuga de datos (*data leakage*), se implementó un `ColumnTransformer` de `scikit-learn` compuesto por:
-
 ### A. Estandarización Numérica (`StandardScaler`)
-* **Columna tratada:** `age`
-* **Método:** Transformación a puntajes Z ($Z = \frac{x - \mu}{\sigma}$), centrando la media en 0 y fijando la desviación estándar en 1.
-* **Resultado:** La columna pasa a llamarse `num__age`. Se eliminan las diferencias de escala respecto a variables binarias, asegurando convergencia óptima en modelos basados en distancias o gradientes.
+
+* **Variable:** `age`
+
+* **Procedimiento:** Transformación Z-score Z= x-miu/sigma con media 0 y varianza unitaria.
+
+
+* **Resultado:** Columna `num__age`, garantizando equilibrio en el cálculo de distancias euclidianas frente a variables binarias.
+
+
 
 ### B. Vectorización Categórica (`OneHotEncoder`)
-* **Columnas tratadas:** `segment`, `region`
+
+* **Variables:** `segment`, `region`, `postal_zone`
 * **Configuración:** `handle_unknown='ignore'`, `sparse_output=False`
-* **Resultado:** Codificación one-hot que crea variables binarias (0/1):
-  * `segment` → `cat__segment_Consumer`, `cat__segment_Corporate`, `cat__segment_Home Office`
-  * `region` → `cat__region_Central`, `cat__region_East`, `cat__region_South`, `cat__region_West`
+
+* **Resultado:** Generación de columnas binarias (*dummy variables*):
+
+
+* `cat__segment_*` (3 niveles)
+
+
+* `cat__region_*` (4 niveles)
+
+
+* `cat__postal_zone_*` (subconjunto representativo de dígitos postales)
+
+
 
 ---
 
-## 5. Estructura de la Matriz Resultante
-* **Dimensiones finales:** 793 filas × 8 características numéricas.
-* **Composición de columnas generadas:**
-  1. `num__age` (Continuo normalizado)
-  2. `cat__segment_Consumer` (Binario 0/1)
-  3. `cat__segment_Corporate` (Binario 0/1)
-  4. `cat__segment_Home Office` (Binario 0/1)
-  5. `cat__region_Central` (Binario 0/1)
-  6. `cat__region_East` (Binario 0/1)
-  7. `cat__region_South` (Binario 0/1)
-  8. `cat__region_West` (Binario 0/1)
+## 5. Estructura de la Matriz Final
 
----
+* **Dimensiones:** 793 filas x variables numéricas normalizadas/binarias.
 
-## 6. Persistencia y Exportación
-El conjunto transformado fue consolidado en un DataFrame estructurado y exportado a:
-* **Ruta de destino:** `data/Customer_preprocessed.csv`
-* **Estado:** Listo para entrenamiento o segmentación.
 
-## 7. Como correr el archivo .py
-python src/preprocess_customer.py
+* **Ausencia de nulos:** 100% de completitud sin valores faltantes.
+
+
+* **Destino de exportación:** `data/Customer_preprocessed.csv`
+
+* **Aptitud metodológica:** Matriz totalmente homogénea lista para modelos de agrupamiento espacial/demográfico o modelos de clasificación predictiva.
