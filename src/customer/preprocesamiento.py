@@ -2,7 +2,15 @@ from pathlib import Path
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+
+def _resolver_project_root() -> Path:
+  current_file = Path(__file__).resolve()
+  for parent in current_file.parents:
+    if (parent / 'pyproject.toml').exists():
+      return parent
+  return current_file.parent
 
 
 def preprocess_region_classification(
@@ -19,7 +27,6 @@ def preprocess_region_classification(
     df['zip'] = df['postal_code'].astype(str)
   elif 'zip' in df.columns:
     df['zip'] = df['zip'].astype(str)
-
 
   expected_features = ['country', 'state', 'city', 'zip']
   available_features = [col for col in expected_features if col in df.columns]
@@ -48,13 +55,71 @@ def preprocess_region_classification(
   print(f"Dimensiones de X_test procesado: {X_test_processed.shape}")
   print(f"\nDistribucion de clases en target (region):\n{y.value_counts()}")
 
-
   X_all_processed = preprocessor.fit_transform(X)
   feature_names = preprocessor.get_feature_names_out()
 
   df_processed = pd.DataFrame(X_all_processed, columns=feature_names)
   df_processed['target_region'] = y.values
 
+  output_path.parent.mkdir(parents=True, exist_ok=True)
+  df_processed.to_csv(output_path, index=False)
+
+  print(f"\nArchivo guardado exitosamente en: {output_path}")
+  print(f"Dimensiones finales: {df_processed.shape}")
+  print("\nPrimeras 3 filas:")
+  print(df_processed.head(3))
+
+  return df_processed
+
+
+def preprocess_segment_classification(
+    input_path: Path, output_path: Path
+) -> pd.DataFrame:
+  """Preprocesa variables demograficas y geograficas (X: age, city, state,
+
+  postal_code, region) para predecir el tipo de cliente (y: segment),
+  valida splits y exporta el CSV final.
+  """
+  print(f"Cargando datos desde: {input_path}")
+  df = pd.read_csv(input_path)
+
+  if 'postal_code' in df.columns:
+    df['postal_code'] = df['postal_code'].astype(str)
+
+  numeric_features = ['age']
+  categorical_features = ['city', 'state', 'postal_code', 'region']
+  available_categorical = [c for c in categorical_features if c in df.columns]
+
+  X = df[numeric_features + available_categorical]
+  y = df['segment']
+
+  preprocessor = ColumnTransformer(
+      transformers=[
+          ('num', StandardScaler(), numeric_features),
+          (
+              'cat',
+              OneHotEncoder(handle_unknown='ignore', sparse_output=False),
+              available_categorical,
+          ),
+      ]
+  )
+
+  X_train, X_test, y_train, y_test = train_test_split(
+      X, y, test_size=0.2, random_state=42, stratify=y
+  )
+
+  X_train_processed = preprocessor.fit_transform(X_train)
+  X_test_processed = preprocessor.transform(X_test)
+
+  print(f"Dimensiones de X_train procesado: {X_train_processed.shape}")
+  print(f"Dimensiones de X_test procesado: {X_test_processed.shape}")
+  print(f"\nDistribucion de clases en target (segment):\n{y.value_counts()}")
+
+  X_all_processed = preprocessor.fit_transform(X)
+  feature_names = preprocessor.get_feature_names_out()
+
+  df_processed = pd.DataFrame(X_all_processed, columns=feature_names)
+  df_processed['target_segment'] = y.values
 
   output_path.parent.mkdir(parents=True, exist_ok=True)
   df_processed.to_csv(output_path, index=False)
@@ -68,14 +133,15 @@ def preprocess_region_classification(
 
 
 if __name__ == '__main__':
-  current_file = Path(__file__).resolve()
-  project_root = (
-      current_file.parent.parent
-      if current_file.parent.name in ['src', 'customer']
-      else current_file.parent
+  project_root = _resolver_project_root()
+  input_file = project_root / 'data' / 'Customer_clean.csv'
+
+  preprocess_region_classification(
+      input_file,
+      project_root / 'data' / 'Customer_region_preprocessed.csv',
   )
 
-  input_file = project_root / 'data' / 'Customer_clean.csv'
-  output_file = project_root / 'data' / 'Customer_region_preprocessed.csv'
-
-  preprocess_region_classification(input_file, output_file)
+  preprocess_segment_classification(
+      input_file,
+      project_root / 'data' / 'Customer_segment_preprocessed.csv',
+  )
