@@ -4,9 +4,10 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
-    accuracy_score, classification_report,
+    accuracy_score, balanced_accuracy_score, classification_report,
     confusion_matrix, precision_recall_fscore_support
 )
+from sklearn.utils.class_weight import compute_sample_weight
 
 from customer.modelos import MODULOS
 
@@ -21,23 +22,31 @@ def comparar_modelos(input_path: Path, target_col: str) -> pd.DataFrame:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
+    sample_weight = compute_sample_weight(class_weight='balanced', y=y_train)
 
     filas = []
     for modulo in MODULOS:
         modelo = modulo.crear_modelo()
-        modelo.fit(X_train, y_train)
+
+        if modulo.NOMBRE == "Perceptron Multicapa":
+            modelo.fit(X_train, y_train)
+        else:
+            modelo.fit(X_train, y_train, sample_weight=sample_weight)
+
         y_pred = modelo.predict(X_test)
         labels = sorted(y_test.unique())
 
         graficar_matriz_confusion(y_test, y_pred, modulo.NOMBRE, labels, target_col)
 
         acc = accuracy_score(y_test, y_pred)
+        bal_acc = balanced_accuracy_score(y_test, y_pred)
         precision, recall, f1, _ = precision_recall_fscore_support(
             y_test, y_pred, average='weighted', zero_division=0
         )
         filas.append({
             'Modelo': modulo.NOMBRE,
             'Accuracy': acc,
+            'Balanced': bal_acc,
             'Precision': precision,
             'Recall': recall,
             'F1-Score': f1,
