@@ -1,3 +1,3 @@
-from . import logistica, svm, arbol
+from . import logistica, svm, arbol, mlp
 
-MODULOS = [logistica, svm, arbol]
+MODULOS = [logistica, svm, arbol, mlp]
