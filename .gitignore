@@ -5,7 +5,6 @@
 #notebooks/*.ipynb
 
 # Datasets
-data/
 
 # Cache de Python
 __pycache__/

@@ -9,12 +9,6 @@ Proyecto de la práctica del primer parcial de la materia de Machine Learning an
 ```text
 ├── notebooks
 ├── data
-├── src
-│   ├── machine_learning_primer_parcial
-│   │   └── __init__.py
-│   ├── limpieza.py
-│   ├── modelos.py
-│   └── utils.py
 ├── .gitignore
 ├── README.md
 ├── pyproject.toml
@@ -29,4 +23,9 @@ Proyecto de la práctica del primer parcial de la materia de Machine Learning an
 
 1. Clonar el repositorio
 2. Ejecutar `uv sync`
-3. Ejecutar `uv run jupyter notebook`
+
+Si no tiene instalado la herramienta uv, puede consultar el siguiente [link](https://docs.astral.sh/uv/getting-started/installation/)
+
+## Ejecucion de los cuadernos
+
+Para ejecutar los cuadernos, si esta en vscode, le pedira el kernel, tiene que utilizar el entorno virtual .venv que creara el uv para que no tenga errores con las dependencias.
